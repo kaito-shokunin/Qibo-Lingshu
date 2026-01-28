@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>岐伯灵枢：中医四诊AI辅助分析平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c7a7b;
+            --secondary-color: #4a5568;
+            --accent-color: #ed8936;
+            --light-color: #f7fafc;
+            --dark-color: #2d3748;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+            background-color: #f8f9fa;
+            color: var(--dark-color);
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #2a6a6b;
+            border-color: #2a6a6b;
+        }
+
+        .btn-accent {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background-color: #dd7724;
+            border-color: #dd7724;
+        }
+
+        .diagnostic-method {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: white;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .diagnostic-method:hover {
+            background-color: #f1f5f9;
+        }
+
+        .diagnostic-method i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .result-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .tongue-image {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .vital-sign {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .vital-sign .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .symptom-tag {
+            display: inline-block;
+            background-color: #e2e8f0;
+            color: var(--dark-color);
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin: 3px;
+            font-size: 0.9rem;
+        }
+
+        .herb-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .acupoint {
+            display: inline-block;
+            background-color: #fef5e7;
+            color: #7d5a0c;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin: 3px;
+            font-size: 0.9rem;
+            border: 1px solid #f9e79f;
+        }
+
+        .footer {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+
+        .alert-custom {
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .voice-recording {
+            background-color: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .voice-recording.active {
+            background-color: #fff5f5;
+            border-color: #feb2b2;
+            border-style: solid;
+            box-shadow: 0 0 15px rgba(245, 101, 101, 0.2);
+        }
+
+        #recordVoiceBtn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-weight: bold;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer !important;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 录音状态下的按钮动画 */
+        .voice-recording.active #recordVoiceBtn {
+            animation: button-pulse 2s infinite;
+        }
+
+        @keyframes button-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+
+        #recordVoiceBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+
+        #recordVoiceBtn:active {
+            transform: scale(0.95);
+        }
+
+        #recordVoiceBtn i {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .tab-content {
+            padding-top: 20px;
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            font-weight: bold;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-success {
+            background-color: #38a169;
+        }
+
+        .status-warning {
+            background-color: #ed8936;
+        }
+
+        .status-error {
+            background-color: #e53e3e;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-heart-pulse-fill me-2"></i>岐伯灵枢：中医四诊AI辅助分析平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#diagnosis">四诊采集</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#analysis">分析结果</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#history">历史记录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container mt-4">
+        <!-- 欢迎页面 -->
+        <div id="home" class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <h1 class="display-4 fw-bold text-primary mb-4">岐伯灵枢</h1>
+                        <p class="lead mb-4">中医四诊AI辅助分析平台</p>
+                        <p class="mb-4">融合传统中医智慧与现代AI技术，为您提供专业的健康分析服务</p>
+                        <button class="btn btn-primary btn-lg" onclick="showSection('diagnosis')">
+                            <i class="bi bi-stethoscope me-2"></i>开始四诊采集
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 四诊方法介绍 -->
+        <div class="row mt-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="diagnostic-method">
+                    <i class="bi bi-eye"></i>
+                    <h5>望诊</h5>
+                    <p>观察舌苔形态，分析健康状态</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diagnostic-method">
+                    <i class="bi bi-activity"></i>
+                    <h5>闻诊</h5>
+                    <p>监测生命体征，收集健康数据</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diagnostic-method">
+                    <i class="bi bi-mic"></i>
+                    <h5>问诊</h5>
+                    <p>语音描述症状，智能识别病情</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diagnostic-method">
+                    <i class="bi bi-hand-index"></i>
+                    <h5>切诊</h5>
+                    <p>脉象分析，判断身体状况</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 四诊采集页面 -->
+        <div id="diagnosis" class="row" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-stethoscope me-2"></i>四诊信息采集</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="diagnosisTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tongue-tab" data-bs-toggle="tab" data-bs-target="#tongue" type="button" role="tab">
+                                    <i class="bi bi-eye me-1"></i>望诊（舌苔）
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="health-tab" data-bs-toggle="tab" data-bs-target="#health" type="button" role="tab">
+                                    <i class="bi bi-activity me-1"></i>闻诊（健康数据）
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="voice-tab" data-bs-toggle="tab" data-bs-target="#voice" type="button" role="tab">
+                                    <i class="bi bi-mic me-1"></i>问诊（语音输入）
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="diagnosisTabsContent">
+                            <!-- 望诊（舌苔） -->
+                            <div class="tab-pane fade show active" id="tongue" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <h5>舌苔图像采集</h5>
+                                        <p>请将舌头伸出，保持自然状态，然后点击下方按钮采集舌苔图像。</p>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6>实时摄像头预览</h6>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-secondary me-2" id="cameraStatusBadge">
+                                                        <i class="bi bi-camera-video-off-fill me-1"></i>已关闭
+                                                    </span>
+                                                    <button id="toggleCameraBtn" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-power me-1"></i>开启摄像头
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="position-relative border rounded bg-dark overflow-hidden" style="height: 400px;">
+                                                <!-- 视频流 -->
+                                                <img src="" id="videoPreview" style="width: 100%; height: 100%; object-fit: cover; display: none;" onerror="handleCameraError(this);">
+                                                
+                                                <!-- 占位提示 -->
+                                                <div id="cameraPlaceholder" class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-white-50">
+                                                    <i class="bi bi-camera-video-off mb-2" style="font-size: 3rem;"></i>
+                                                    <p>摄像头未开启</p>
+                                                </div>
+
+                                                <!-- 引导图层 -->
+                                                <div id="cameraOverlay" class="position-absolute top-50 start-50 translate-middle w-100 h-100 d-flex align-items-center justify-content-center" style="pointer-events: none; display: none;">
+                                                    <div style="width: 200px; height: 280px; border: 2px dashed rgba(255,255,255,0.5); border-radius: 50% / 40%;"></div>
+                                                    <div class="position-absolute text-white-50 small" style="top: 20%;">请将舌头对准虚线框</div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 text-muted small">
+                                                <i class="bi bi-info-circle me-1"></i>提示：请在光线充足的环境下进行采集，确保舌头自然伸出。
+                                            </div>
+                                        </div>
+                                        <button id="captureTongueBtn" class="btn btn-primary w-100 btn-lg">
+                                            <i class="bi bi-camera-fill me-2"></i>立即拍照并分析
+                                        </button>
+                                        <div class="mt-3">
+                                            <h6>捕获的图像</h6>
+                                            <img id="tongueImage" class="tongue-image" style="display: none;">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>舌苔分析结果</h5>
+                                        <div id="tongueAnalysis" class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i>等待舌苔图像采集...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 闻诊（健康数据） -->
+                            <div class="tab-pane fade" id="health" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <h5>健康数据采集</h5>
+                                        <p>请输入您的智能手环MAC地址，然后点击下方按钮采集健康数据。</p>
+                                        <div class="mb-3">
+                                            <label for="deviceMac" class="form-label">设备MAC地址 (BK01)</label>
+                                            <input type="text" class="form-control" id="deviceMac" value="B9:77:6A:8F:29:30" placeholder="例如: 00:11:22:33:44:55">
+                                        </div>
+                                        <button id="collectHealthBtn" class="btn btn-primary w-100">
+                                            <i class="bi bi-bluetooth me-2"></i>采集健康数据
+                                        </button>
+                                        <div class="loading mt-3" id="healthLoading">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">加载中...</span>
+                                            </div>
+                                            <p class="mt-2">正在连接设备并采集数据...</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>健康数据分析</h5>
+                                        <div id="healthAnalysis">
+                                            <div class="vital-sign mb-3">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span><i class="bi bi-cpu me-2"></i>设备来源</span>
+                                                    <span class="badge bg-secondary" id="deviceSource">未连接</span>
+                                                </div>
+                                            </div>
+                                            <!-- 新增：原始数据调试区域 -->
+                                            <div class="mt-3 p-2 bg-light rounded border" style="font-family: monospace; font-size: 0.8rem; display: none;" id="debugPanel">
+                                                <div class="text-muted mb-1">调试信息 (Raw Data):</div>
+                                                <div id="rawHexData" class="text-break text-primary">--</div>
+                                            </div>
+                                            <div class="vital-sign">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span><i class="bi bi-heart-pulse me-2"></i>心率</span>
+                                                    <span class="value" id="heartRate">--</span>
+                                                </div>
+                                            </div>
+                                            <div class="vital-sign">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span><i class="bi bi-droplet me-2"></i>血氧</span>
+                                                    <span class="value" id="bloodOxygen">--</span>
+                                                </div>
+                                            </div>
+                                            <div class="vital-sign">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span><i class="bi bi-speedometer2 me-2"></i>血压</span>
+                                                    <span class="value" id="bloodPressure">--</span>
+                                                </div>
+                                            </div>
+                                            <div class="vital-sign">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span><i class="bi bi-thermometer me-2"></i>体温</span>
+                                                    <span class="value" id="temperature">--</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- 新增：BLE 设备服务浏览器 -->
+                                            <div class="mt-3">
+                                                <button class="btn btn-sm btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#bleExplorer" aria-expanded="false">
+                                                    <i class="bi bi-search me-1"></i>查看设备服务详情 (BLE Explorer)
+                                                </button>
+                                                <div class="collapse mt-2" id="bleExplorer">
+                                                    <div class="card card-body p-2 bg-light border-0 shadow-sm" style="font-size: 0.75rem;">
+                                                        <div id="bleServiceList" class="accordion accordion-flush">
+                                                            <div class="text-muted text-center p-3">暂无设备服务信息，请先进行采集</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 问诊（语音输入） -->
+                            <div class="tab-pane fade" id="voice" role="tabpanel">
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <h5>语音症状描述</h5>
+                                        <p>请描述您的症状和身体状况，系统将自动转换为文字。</p>
+                                        <div class="voice-recording" id="voiceRecording">
+                                            <button id="recordVoiceBtn" class="btn btn-accent">
+                                                <i class="bi bi-mic-fill"></i><span>开始</span>
+                                            </button>
+                                            <p class="mt-3 text-muted">点击按钮开始录音，再次点击结束录音</p>
+                                        </div>
+                                        <div class="loading mt-3" id="voiceLoading">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">加载中...</span>
+                                            </div>
+                                            <p class="mt-2">正在转换语音为文字...</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>症状文字描述</h5>
+                                        <div class="mb-3">
+                                            <label for="symptomText" class="form-label">症状描述</label>
+                                            <textarea class="form-control" id="symptomText" rows="6" placeholder="您的症状描述将显示在这里..."></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">识别的症状：</label>
+                                            <div id="extractedSymptoms">
+                                                <span class="symptom-tag">等待症状提取...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button id="analyzeBtn" class="btn btn-primary btn-lg">
+                                <i class="bi bi-cpu me-2"></i>开始中医分析
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分析结果页面 -->
+        <div id="analysis" class="row" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-cpu me-2"></i>中医分析结果</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="loading" id="analysisLoading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">分析中...</span>
+                            </div>
+                            <p class="mt-2">正在进行中医四诊综合分析...</p>
+                            <div class="progress mt-3">
+                                <div class="progress-bar" role="progressbar" style="width: 0%" id="analysisProgress"></div>
+                            </div>
+                        </div>
+                        <div id="analysisResult" style="display: none;">
+                            <!-- 安全警告 -->
+                            <div id="safetyWarningContainer" style="display: none;" class="alert alert-danger mb-4">
+                                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>安全警示</h5>
+                                <p id="safetyWarningText" class="mb-0"></p>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>诊断结果</h5>
+                                    <div class="alert alert-success">
+                                        <h6>中医证型：</h6>
+                                        <p id="diagnosisResult" class="mb-0 fw-bold fs-5"></p>
+                                    </div>
+                                    <div class="alert alert-secondary" id="diagnosticBasisContainer">
+                                        <h6>诊断依据：</h6>
+                                        <ul id="diagnosticBasis" class="mb-0 small"></ul>
+                                    </div>
+                                    <div class="alert alert-info">
+                                        <h6>症状分析：</h6>
+                                        <div id="symptomsAnalysis"></div>
+                                    </div>
+                                    <div id="followUpContainer" class="alert alert-primary" style="display: none;">
+                                        <h6>追问建议：</h6>
+                                        <p class="small text-muted mb-2">为了更精准地辨证，您可以继续补充以下信息：</p>
+                                        <ul id="followUpQuestions" class="mb-0 small fw-bold text-primary"></ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>舌苔与脉象分析</h5>
+                                    <div class="alert alert-warning">
+                                        <h6>舌苔分析：</h6>
+                                        <p id="tongueAnalysisResult" class="mb-0"></p>
+                                    </div>
+                                    <div class="alert alert-warning">
+                                        <h6>脉象分析：</h6>
+                                        <p id="pulseAnalysisResult" class="mb-0"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h5>治疗建议</h5>
+                                    <div class="alert alert-primary">
+                                        <h6>治疗原则：</h6>
+                                        <p id="treatmentPrinciple" class="mb-0"></p>
+                                    </div>
+                                    <h6 class="mt-3">推荐中药：</h6>
+                                    <div id="herbRecommendation"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>调理建议</h5>
+                                    <h6>推荐穴位：</h6>
+                                    <div id="acupointRecommendation"></div>
+                                    <h6 class="mt-3">饮食建议：</h6>
+                                    <div id="dietaryRecommendation"></div>
+                                    <h6 class="mt-3">生活建议：</h6>
+                                    <div id="lifestyleRecommendation"></div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-4">
+                                <button class="btn btn-primary" onclick="showSection('diagnosis')">
+                                    <i class="bi bi-arrow-left me-2"></i>返回四诊采集
+                                </button>
+                                <button class="btn btn-success ms-2" onclick="saveAnalysisResult()">
+                                    <i class="bi bi-save me-2"></i>保存分析结果
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录页面 -->
+        <div id="history" class="row" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-clock-history me-2"></i>历史分析记录</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>诊断结果</th>
+                                        <th>分析方法</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody">
+                                    <tr>
+                                        <td colspan="4" class="text-center">暂无历史记录</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-0">© 2023 岐伯灵枢：中医四诊AI辅助分析平台 | 基于Jetson Nano开发</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let tongueImagePath = null;
+        let healthData = null;
+        let symptomText = null;
+        let isRecording = false;
+
+        // 显示指定部分
+        function showSection(sectionId) {
+            // 隐藏所有部分
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('diagnosis').style.display = 'none';
+            document.getElementById('analysis').style.display = 'none';
+            document.getElementById('history').style.display = 'none';
+            
+            // 显示指定部分
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // 更新导航栏
+            document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            if (sectionId === 'home') {
+                document.querySelector('a[href="#home"]').classList.add('active');
+            } else if (sectionId === 'diagnosis') {
+                document.querySelector('a[href="#diagnosis"]').classList.add('active');
+            } else if (sectionId === 'analysis') {
+                document.querySelector('a[href="#analysis"]').classList.add('active');
+            } else if (sectionId === 'history') {
+                document.querySelector('a[href="#history"]').classList.add('active');
+                loadHistory();
+            }
+        }
+
+        // 处理摄像头错误
+        function handleCameraError(img) {
+            console.warn("Camera stream error, might be closed.");
+        }
+
+        // 摄像头控制逻辑
+        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+        const videoPreview = document.getElementById('videoPreview');
+        const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+        const cameraOverlay = document.getElementById('cameraOverlay');
+        const cameraStatusBadge = document.getElementById('cameraStatusBadge');
+        let isCameraActive = false;
+
+        toggleCameraBtn.addEventListener('click', function() {
+            if (!isCameraActive) {
+                // 开启摄像头
+                fetch('/start_camera', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        isCameraActive = true;
+                        videoPreview.src = '/video_feed?t=' + new Date().getTime();
+                        videoPreview.style.display = 'block';
+                        cameraPlaceholder.style.display = 'none';
+                        cameraOverlay.style.display = 'flex';
+                        cameraStatusBadge.className = 'badge bg-success me-2';
+                        cameraStatusBadge.innerHTML = '<i class="bi bi-record-fill me-1"></i>正在运行';
+                        toggleCameraBtn.innerHTML = '<i class="bi bi-power me-1"></i>关闭摄像头';
+                        toggleCameraBtn.classList.replace('btn-outline-primary', 'btn-outline-danger');
+                    } else {
+                        alert('开启摄像头失败: ' + data.message);
+                    }
+                })
+                .catch(error => alert('开启摄像头失败: 网络错误'));
+            } else {
+                // 关闭摄像头
+                fetch('/stop_camera', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    isCameraActive = false;
+                    videoPreview.src = '';
+                    videoPreview.style.display = 'none';
+                    cameraPlaceholder.style.display = 'flex';
+                    cameraOverlay.style.display = 'none';
+                    cameraStatusBadge.className = 'badge bg-secondary me-2';
+                    cameraStatusBadge.innerHTML = '<i class="bi bi-camera-video-off-fill me-1"></i>已关闭';
+                    toggleCameraBtn.innerHTML = '<i class="bi bi-power me-1"></i>开启摄像头';
+                    toggleCameraBtn.classList.replace('btn-outline-danger', 'btn-outline-primary');
+                })
+                .catch(error => alert('关闭摄像头失败: 网络错误'));
+            }
+        });
+
+        // 采集舌苔图像
+        document.getElementById('captureTongueBtn').addEventListener('click', function() {
+            console.log("Capture button clicked");
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            // 如果摄像头未开启，点击采集时自动尝试开启
+            if (!isCameraActive) {
+                console.log("Camera not active, auto-starting...");
+                toggleCameraBtn.click();
+                
+                // 给摄像头一点启动时间，然后再执行采集
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在开启并采集...';
+                
+                setTimeout(() => {
+                    performCapture(btn, originalText);
+                }, 2000); // 增加到2秒，确保硬件初始化完成
+            } else {
+                performCapture(btn, originalText);
+            }
+        });
+
+        function performCapture(btn, originalText) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在采集并分析...';
+            
+            fetch('/capture_tongue', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                
+                if (data.status === 'success') {
+                    tongueImagePath = data.image_path;
+                    const filename = tongueImagePath.split(/[\\/]/).pop();
+                    document.getElementById('tongueImage').src = '/uploads/' + filename + '?t=' + new Date().getTime();
+                    document.getElementById('tongueImage').style.display = 'block';
+                    
+                    let analysisHtml = `
+                        <div class="alert alert-success">
+                            <h6><i class="bi bi-check-circle-fill me-2"></i>采集成功</h6>
+                            <p><strong>诊断建议：</strong>${data.analysis.interpretation}</p>
+                            <hr>
+                            <div class="feedback-section mt-2" id="feedbackContainer">
+                                <p class="small text-muted mb-2"><i class="bi bi-info-circle me-1"></i>诊断结果是否准确？您的反馈将帮助系统自我学习和完善。</p>
+                                <div class="d-flex gap-2" id="feedbackButtons">
+                                    <button class="btn btn-sm btn-outline-success" onclick="sendFeedback(true)">准确</button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="showFeedbackForm()">不准确，我要修正</button>
+                                </div>
+                                <div id="feedbackForm" class="mt-3 p-2 bg-white rounded border" style="display: none;">
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-bold">修正舌苔：</label>
+                                        <select id="correctedCoating" class="form-select form-select-sm">
+                                            <option value="薄白苔" ${data.analysis.tongue_coating === '薄白苔' ? 'selected' : ''}>薄白苔</option>
+                                            <option value="白厚苔" ${data.analysis.tongue_coating === '白厚苔' ? 'selected' : ''}>白厚苔</option>
+                                            <option value="黄苔" ${data.analysis.tongue_coating === '黄苔' ? 'selected' : ''}>黄苔</option>
+                                            <option value="黄厚苔" ${data.analysis.tongue_coating === '黄厚苔' ? 'selected' : ''}>黄厚苔</option>
+                                            <option value="黑苔" ${data.analysis.tongue_coating === '黑苔' ? 'selected' : ''}>黑苔</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-bold">修正颜色：</label>
+                                        <select id="correctedColor" class="form-select form-select-sm">
+                                            <option value="淡红舌" ${data.analysis.tongue_color === '淡红舌' ? 'selected' : ''}>淡红舌</option>
+                                            <option value="淡白舌" ${data.analysis.tongue_color === '淡白舌' ? 'selected' : ''}>淡白舌</option>
+                                            <option value="红舌" ${data.analysis.tongue_color === '红舌' ? 'selected' : ''}>红舌</option>
+                                            <option value="紫舌" ${data.analysis.tongue_color === '紫舌' ? 'selected' : ''}>紫舌</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary w-100" onclick="sendFeedback(false)">提交修正并让系统学习</button>
+                                </div>
+                            </div>
+                            <hr>
+                            <h6>识别到的症状：</h6>
+                            <div class="mt-2">
+                    `;
+                    
+                    if (data.symptoms && data.symptoms.length > 0) {
+                        data.symptoms.forEach(s => {
+                            analysisHtml += `<span class="symptom-tag">${s}</span>`;
+                        });
+                    } else {
+                        analysisHtml += `<span class="symptom-tag">舌苔正常</span>`;
+                    }
+                    
+                    analysisHtml += `</div></div>`;
+                    document.getElementById('tongueAnalysis').innerHTML = analysisHtml;
+                } else {
+                    document.getElementById('tongueAnalysis').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>采集失败: ${data.message}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                console.error('Error:', error);
+                document.getElementById('tongueAnalysis').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>采集失败: 网络错误
+                    </div>
+                `;
+            });
+        }
+
+        // 采集健康数据
+        document.getElementById('collectHealthBtn').addEventListener('click', function() {
+            const deviceMac = document.getElementById('deviceMac').value;
+            
+            if (!deviceMac) {
+                alert('请输入设备MAC地址');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('healthLoading').style.display = 'block';
+            
+            fetch('/collect_health_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ device_mac: deviceMac })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 隐藏加载状态
+                document.getElementById('healthLoading').style.display = 'none';
+                
+                if (data.status === 'success') {
+                    healthData = data.vitals;
+                    
+                    // 更新设备来源显示
+                    const sourceBadge = document.getElementById('deviceSource');
+                    sourceBadge.textContent = data.vitals.device_type || '未知设备';
+                    if (data.vitals.device_type && data.vitals.device_type.includes('BK01')) {
+                        sourceBadge.className = 'badge bg-success';
+                        sourceBadge.innerHTML = '<i class="bi bi-bluetooth me-1"></i>' + data.vitals.device_type;
+                    } else {
+                        sourceBadge.className = 'badge bg-warning text-dark';
+                        sourceBadge.innerHTML = '<i class="bi bi-info-circle me-1"></i>' + (data.vitals.device_type || '模拟数据');
+                    }
+                    
+                    // 更新健康数据显示
+                    const v = data.vitals;
+                    document.getElementById('heartRate').textContent = (v.heart_rate || '--') + ' bpm';
+                    document.getElementById('bloodOxygen').textContent = (v.blood_oxygen || '--') + '%';
+                    document.getElementById('bloodPressure').textContent = 
+                        (v.blood_pressure_systolic || '--') + '/' + (v.blood_pressure_diastolic || '--') + ' mmHg';
+                    document.getElementById('temperature').textContent = (v.temperature || '--') + '°C';
+                    
+                    // 更新调试信息
+                    const debugPanel = document.getElementById('debugPanel');
+                    const rawHexData = document.getElementById('rawHexData');
+                    if (v.raw_data) {
+                        debugPanel.style.display = 'block';
+                        rawHexData.textContent = v.raw_data;
+                    } else {
+                        debugPanel.style.display = 'none';
+                    }
+                    
+                    // 更新 BLE Explorer
+                    const bleServiceList = document.getElementById('bleServiceList');
+                    if (v.device_info && v.device_info.length > 0) {
+                        let bleHtml = '';
+                        v.device_info.forEach((service, sIdx) => {
+                            const serviceId = `service_${sIdx}`;
+                            bleHtml += `
+                                <div class="accordion-item bg-transparent">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed p-2 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#${serviceId}">
+                                            <div class="small">
+                                                <div class="fw-bold text-dark">${service.name}</div>
+                                                <div class="text-muted" style="font-size: 0.65rem;">UUID: ${service.uuid}</div>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="${serviceId}" class="accordion-collapse collapse">
+                                        <div class="accordion-body p-1">
+                                            <ul class="list-group list-group-flush">
+                                                ${service.characteristics.map(char => `
+                                                    <li class="list-group-item p-1 bg-transparent border-0 border-bottom">
+                                                        <div class="d-flex justify-content-between">
+                                                            <span class="fw-bold">${char.name}</span>
+                                                            <span class="badge bg-light text-dark border" style="font-size: 0.6rem;">${char.properties.join(', ')}</span>
+                                                        </div>
+                                                        <div class="text-muted" style="font-size: 0.65rem;">UUID: ${char.uuid}</div>
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        });
+                        bleServiceList.innerHTML = bleHtml;
+                    } else {
+                        bleServiceList.innerHTML = '<div class="text-muted text-center p-3">未获取到服务详情，可能当前为模拟模式</div>';
+                    }
+                    
+                    // 显示异常指标
+                    const healthAnalysisDiv = document.getElementById('healthAnalysis');
+                    // 清除之前的异常信息（保留标题和基础数值）
+                    const existingAlert = healthAnalysisDiv.querySelector('.alert-warning');
+                    if (existingAlert) existingAlert.remove();
+
+                    if (data.abnormalities && data.abnormalities.length > 0) {
+                        let abnormalHtml = '<div class="alert alert-warning mt-3"><h6><i class="bi bi-exclamation-triangle-fill me-2"></i>异常指标提示：</h6><ul class="mb-0">';
+                        data.abnormalities.forEach(abnormal => {
+                            abnormalHtml += `<li><strong>${abnormal.type}</strong>: ${abnormal.value} (${abnormal.status}) - ${abnormal.description}</li>`;
+                        });
+                        abnormalHtml += '</ul></div>';
+                        healthAnalysisDiv.insertAdjacentHTML('beforeend', abnormalHtml);
+                    }
+                } else {
+                    alert('健康数据采集失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                // 隐藏加载状态
+                document.getElementById('healthLoading').style.display = 'none';
+                console.error('Error:', error);
+                alert('健康数据采集失败: 网络错误');
+            });
+        });
+
+        // 语音录音
+        let recognition = null;
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'zh-CN';
+
+            recognition.onstart = function() {
+                console.log("语音识别已启动");
+                isRecording = true;
+                const btn = document.getElementById('recordVoiceBtn');
+                btn.innerHTML = '<i class="bi bi-stop-circle"></i><span>停止</span>';
+                btn.classList.remove('btn-accent');
+                btn.classList.add('btn-danger');
+                document.getElementById('voiceRecording').classList.add('active');
+            };
+
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    const symptomTextarea = document.getElementById('symptomText');
+                    symptomTextarea.value += finalTranscript;
+                    extractSymptoms(symptomTextarea.value);
+                }
+            };
+
+            recognition.onerror = function(event) {
+                console.error("语音识别错误:", event.error);
+                
+                // 如果是手动停止（aborted），不显示错误提示
+                if (event.error === 'aborted') {
+                    console.log("语音识别已被用户主动中止，忽略错误提示");
+                    return;
+                }
+                
+                stopRecording();
+                
+                let errorMsg = "语音识别出错: " + event.error;
+                if (event.error === 'not-allowed') {
+                    errorMsg = "麦克风权限被拒绝。请确保：\n1. 已允许浏览器访问麦克风\n2. 如果使用 IP 访问，请尝试使用 localhost\n3. 检查麦克风是否已连接并正常工作";
+                } else if (event.error === 'no-speech') {
+                    errorMsg = "未检测到语音输入，请再试一次。";
+                } else if (event.error === 'network') {
+                    errorMsg = "语音识别网络连接错误。";
+                }
+                
+                alert(errorMsg);
+            };
+
+            recognition.onend = function() {
+                console.log("语音识别已结束");
+                if (isRecording) {
+                    stopRecording();
+                }
+            };
+        }
+
+        function stopRecording() {
+            console.log("正在停止录音...");
+            isRecording = false;
+            
+            // 同时发送停止信号到服务器 (针对服务器端录音的保险措施)
+            fetch('/stop_voice', { method: 'POST' }).catch(e => console.error("发送停止录音信号失败:", e));
+            
+            const btn = document.getElementById('recordVoiceBtn');
+            if (btn) {
+                btn.innerHTML = '<i class="bi bi-mic-fill"></i><span>开始</span>';
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-accent');
+                btn.disabled = false;
+            }
+            
+            const recordingIndicator = document.getElementById('voiceRecording');
+            if (recordingIndicator) {
+                recordingIndicator.classList.remove('active');
+            }
+            
+            if (recognition) {
+                try {
+                    // 使用 abort() 强制立即停止，不等待最后的识别结果
+                    recognition.abort();
+                    console.log("语音识别已强制中止 (abort)");
+                } catch (e) {
+                    console.log("中止语音识别时出错:", e);
+                }
+            }
+        }
+
+        document.getElementById('recordVoiceBtn').addEventListener('click', function() {
+            console.log("录音按钮被点击, 当前录音状态:", isRecording);
+            if (!recognition) {
+                alert("您的浏览器不支持语音识别功能，请使用 Chrome 或 Edge 浏览器。");
+                return;
+            }
+
+            if (!isRecording) {
+                document.getElementById('symptomText').value = ''; // 清空之前的文字
+                recognition.start();
+            } else {
+                // 立即更新 UI，不要等待 onend 事件
+                stopRecording();
+            }
+        });
+
+        // 提取症状
+        function extractSymptoms(text) {
+            const symptomKeywords = {
+                "发热": ["发烧", "发热", "体温高", "身热", "发烧了"],
+                "咳嗽": ["咳嗽", "咳", "干咳", "咳痰", "痰多", "百日咳"],
+                "头痛": ["头痛", "头疼", "头晕", "头昏", "脑壳痛"],
+                "乏力": ["乏力", "疲劳", "累", "没精神", "精神不振", "四肢无力", "身重"],
+                "食欲不振": ["食欲不振", "没胃口", "不想吃", "吃不下", "纳差", "厌食"],
+                "失眠": ["失眠", "睡不着", "入睡困难", "多梦", "易醒", "浅睡"],
+                "胃痛": ["胃痛", "胃疼", "肚子痛", "腹痛", "胃胀", "嘈杂"],
+                "关节痛": ["关节痛", "关节疼", "风湿", "关节炎", "骨痛", "腰痛", "腿痛"],
+                "心慌": ["心慌", "心悸", "心跳快", "心跳不规律", "胸口乱跳"],
+                "气短": ["气短", "气喘", "呼吸困难", "胸闷", "少气"],
+                "口干": ["口干", "口渴", "口燥", "咽干", "想喝水"],
+                "便秘": ["便秘", "大便干燥", "排便困难", "大便不畅", "几天没拉"],
+                "腹泻": ["腹泻", "拉肚子", "大便稀", "便溏", "拉稀", "五更泻"],
+                "恶心": ["恶心", "想吐", "呕吐", "反胃", "干呕"],
+                "怕冷": ["怕冷", "畏寒", "恶寒", "身上冷"],
+                "自汗": ["自汗", "容易出汗", "动则汗出"],
+                "盗汗": ["盗汗", "半夜出汗", "睡觉出汗"],
+                "咽痛": ["咽痛", "嗓子疼", "喉咙痛", "咽干"]
+            };
+            
+            const symptoms = [];
+            for (const [symptom, keywords] of Object.entries(symptomKeywords)) {
+                for (const keyword of keywords) {
+                    if (text.includes(keyword)) {
+                        symptoms.push(symptom);
+                        break;
+                    }
+                }
+            }
+            
+            // 显示提取的症状
+            let symptomsHtml = '';
+            if (symptoms.length > 0) {
+                symptoms.forEach(symptom => {
+                    symptomsHtml += `<span class="symptom-tag">${symptom}</span>`;
+                });
+            } else {
+                symptomsHtml = '<span class="symptom-tag">未识别到明显症状</span>';
+            }
+            
+            document.getElementById('extractedSymptoms').innerHTML = symptomsHtml;
+        }
+
+        // 症状文本变化时提取症状
+        document.getElementById('symptomText').addEventListener('input', function() {
+            extractSymptoms(this.value);
+        });
+
+        // 开始中医分析
+        document.getElementById('analyzeBtn').addEventListener('click', function() {
+            // 检查是否采集了必要信息
+            if (!tongueImagePath) {
+                alert('请先采集舌苔图像');
+                return;
+            }
+            
+            if (!healthData) {
+                alert('请先采集健康数据');
+                return;
+            }
+            
+            symptomText = document.getElementById('symptomText').value;
+            if (!symptomText) {
+                alert('请输入症状描述');
+                return;
+            }
+            
+            // 切换到分析页面
+            showSection('analysis');
+            
+            // 显示加载状态
+            document.getElementById('analysisLoading').style.display = 'block';
+            document.getElementById('analysisResult').style.display = 'none';
+            
+            // 模拟分析进度
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                document.getElementById('analysisProgress').style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    
+                    // 执行分析
+                    fetch('/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            tongue_image: tongueImagePath,
+                            vitals: healthData,
+                            patient_description: symptomText
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 隐藏加载状态
+                        document.getElementById('analysisLoading').style.display = 'none';
+                        
+                        if (data.status === 'success') {
+                            // 显示分析结果
+                            displayAnalysisResult(data.result);
+                        } else {
+                            alert('分析失败: ' + data.message);
+                            showSection('diagnosis');
+                        }
+                    })
+                    .catch(error => {
+                        // 隐藏加载状态
+                        document.getElementById('analysisLoading').style.display = 'none';
+                        console.error('Error:', error);
+                        alert('分析失败: 网络错误');
+                        showSection('diagnosis');
+                    });
+                }
+            }, 200);
+        });
+
+        // 显示分析结果
+        function displayAnalysisResult(result) {
+            // 处理安全警告
+            const safetyContainer = document.getElementById('safetyWarningContainer');
+            if (result.safety_warning) {
+                document.getElementById('safetyWarningText').textContent = result.safety_warning;
+                safetyContainer.style.display = 'block';
+            } else {
+                safetyContainer.style.display = 'none';
+            }
+
+            // 显示诊断依据
+            const basisList = document.getElementById('diagnosticBasis');
+            basisList.innerHTML = '';
+            if (result.diagnostic_basis && result.diagnostic_basis.length > 0) {
+                result.diagnostic_basis.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    basisList.appendChild(li);
+                });
+            } else {
+                basisList.innerHTML = '<li>根据四诊综合数据自动分析得出。</li>';
+            }
+
+            // 显示诊断结果
+            document.getElementById('diagnosisResult').textContent = result.diagnosis || '未明确诊断';
+            
+            // 显示症状分析
+            let symptomsHtml = '';
+            if (result.symptoms && result.symptoms.length > 0) {
+                result.symptoms.forEach(symptom => {
+                    symptomsHtml += `<span class="symptom-tag">${symptom}</span>`;
+                });
+            } else {
+                symptomsHtml = '<span class="symptom-tag">未识别到明显症状</span>';
+            }
+            document.getElementById('symptomsAnalysis').innerHTML = symptomsHtml;
+            
+            // 显示追问建议
+            const followUpContainer = document.getElementById('followUpContainer');
+            const followUpList = document.getElementById('followUpQuestions');
+            followUpList.innerHTML = '';
+            if (result.follow_up_questions && result.follow_up_questions.length > 0) {
+                result.follow_up_questions.forEach(question => {
+                    const li = document.createElement('li');
+                    li.textContent = question;
+                    followUpList.appendChild(li);
+                });
+                followUpContainer.style.display = 'block';
+            } else {
+                followUpContainer.style.display = 'none';
+            }
+            
+            // 显示舌苔分析
+            let tongueAnalysisHtml = '';
+            if (result.tongue_analysis) {
+                for (const [key, value] of Object.entries(result.tongue_analysis)) {
+                    tongueAnalysisHtml += `<p><strong>${key}:</strong> ${value}</p>`;
+                }
+            } else {
+                tongueAnalysisHtml = '<p>舌苔分析数据不完整</p>';
+            }
+            document.getElementById('tongueAnalysisResult').innerHTML = tongueAnalysisHtml;
+            
+            // 显示脉象分析
+            let pulseAnalysisHtml = '';
+            if (result.pulse_analysis) {
+                for (const [key, value] of Object.entries(result.pulse_analysis)) {
+                    pulseAnalysisHtml += `<p><strong>${key}:</strong> ${value}</p>`;
+                }
+            } else {
+                pulseAnalysisHtml = '<p>脉象分析数据不完整</p>';
+            }
+            document.getElementById('pulseAnalysisResult').innerHTML = pulseAnalysisHtml;
+            
+            // 显示治疗原则
+            document.getElementById('treatmentPrinciple').textContent = result.treatment_principle || '请咨询专业中医师';
+            
+            // 显示中药推荐
+            let herbHtml = '';
+            if (result.herb_recommendation && result.herb_recommendation.length > 0) {
+                result.herb_recommendation.forEach(herb => {
+                    herbHtml += `
+                        <div class="herb-item">
+                            <h6>${herb.name}</h6>
+                            <p class="mb-1"><strong>性味:</strong> ${herb.properties}</p>
+                            <p class="mb-1"><strong>归经:</strong> ${herb.meridian}</p>
+                            <p class="mb-1"><strong>功效:</strong> ${herb.effects}</p>
+                            <p class="mb-0"><strong>剂量:</strong> ${herb.dosage}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                herbHtml = '<p class="text-muted">暂无中药推荐</p>';
+            }
+            document.getElementById('herbRecommendation').innerHTML = herbHtml;
+            
+            // 显示穴位推荐
+            let acupointHtml = '';
+            if (result.acupoint_recommendation && result.acupoint_recommendation.length > 0) {
+                result.acupoint_recommendation.forEach(acupoint => {
+                    acupointHtml += `<span class="acupoint">${acupoint}</span>`;
+                });
+            } else {
+                acupointHtml = '<p class="text-muted">暂无穴位推荐</p>';
+            }
+            document.getElementById('acupointRecommendation').innerHTML = acupointHtml;
+            
+            // 显示饮食建议
+            let dietaryHtml = '';
+            if (result.dietary_recommendation && result.dietary_recommendation.length > 0) {
+                result.dietary_recommendation.forEach(item => {
+                    dietaryHtml += `<p class="mb-1"><i class="bi bi-check-circle me-2"></i>${item}</p>`;
+                });
+            } else {
+                dietaryHtml = '<p class="text-muted">暂无饮食建议</p>';
+            }
+            document.getElementById('dietaryRecommendation').innerHTML = dietaryHtml;
+            
+            // 显示生活建议
+            let lifestyleHtml = '';
+            if (result.lifestyle_recommendation && result.lifestyle_recommendation.length > 0) {
+                result.lifestyle_recommendation.forEach(item => {
+                    lifestyleHtml += `<p class="mb-1"><i class="bi bi-check-circle me-2"></i>${item}</p>`;
+                });
+            } else {
+                lifestyleHtml = '<p class="text-muted">暂无生活建议</p>';
+            }
+            document.getElementById('lifestyleRecommendation').innerHTML = lifestyleHtml;
+            
+            // 显示分析结果
+            document.getElementById('analysisResult').style.display = 'block';
+        }
+
+        // 反馈机制相关函数
+        function showFeedbackForm() {
+            document.getElementById('feedbackButtons').style.display = 'none';
+            document.getElementById('feedbackForm').style.display = 'block';
+        }
+
+        function sendFeedback(isAccurate) {
+            const feedbackContainer = document.getElementById('feedbackContainer');
+            let correctedResult = {};
+            
+            if (isAccurate) {
+                // 如果用户点准确，我们取当前的诊断结果作为“修正”结果（即确认为正确）
+                // 这里为了简单，我们暂时只记录状态，实际应用中可以从 data.analysis 获取
+                correctedResult = {
+                    status: 'accurate',
+                    timestamp: new Date().toISOString()
+                };
+            } else {
+                // 如果用户点不准确，获取用户修正后的值
+                correctedResult = {
+                    tongue_coating: document.getElementById('correctedCoating').value,
+                    tongue_color: document.getElementById('correctedColor').value,
+                    status: 'corrected',
+                    timestamp: new Date().toISOString()
+                };
+            }
+            
+            feedbackContainer.innerHTML = '<div class="text-center p-2"><span class="spinner-border spinner-border-sm me-2"></span>正在提交反馈...</div>';
+            
+            fetch('/tongue_feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image_path: tongueImagePath,
+                    corrected_result: correctedResult
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    feedbackContainer.innerHTML = `
+                        <div class="alert alert-success py-1 px-2 mb-0 small">
+                            <i class="bi bi-check-circle-fill me-1"></i> ${data.message}
+                        </div>
+                    `;
+                } else {
+                    feedbackContainer.innerHTML = `
+                        <div class="alert alert-danger py-1 px-2 mb-0 small">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> 提交失败: ${data.message}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                feedbackContainer.innerHTML = `
+                    <div class="alert alert-danger py-1 px-2 mb-0 small">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> 网络错误，请重试
+                    </div>
+                `;
+            });
+        }
+
+        // 保存分析结果
+        function saveAnalysisResult() {
+            // 模拟保存结果
+            alert('分析结果已保存');
+        }
+
+        // 加载历史记录
+        function loadHistory() {
+            const historyTableBody = document.getElementById('historyTableBody');
+            historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center"><span class="spinner-border spinner-border-sm me-2"></span>正在加载历史记录...</td></tr>';
+            
+            fetch('/history')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.history && data.history.length > 0) {
+                        let historyHtml = '';
+                        // 按时间倒序排列
+                        const sortedHistory = [...data.history].reverse();
+                        sortedHistory.forEach(record => {
+                            historyHtml += `
+                                <tr>
+                                    <td>${record.timestamp ? record.timestamp.replace('T', ' ').split('.')[0] : '未知'}</td>
+                                    <td>${record.summary || '未知诊断'}</td>
+                                    <td>
+                                        <span class="status-indicator ${record.method === 'AI模型' ? 'status-success' : 'status-warning'}"></span>
+                                        ${record.method || '未知'}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="alert('查看详情功能开发中...')">
+                                            <i class="bi bi-eye me-1"></i>查看
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        historyTableBody.innerHTML = historyHtml;
+                    } else {
+                        historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">暂无历史记录</td></tr>';
+                    }
+                } else {
+                    historyTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">加载失败: ${data.message}</td></tr>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">加载失败: 网络错误</td></tr>';
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 默认显示首页
+            showSection('home');
+        });
+    </script>
+</body>
+</html>
